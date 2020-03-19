@@ -96,7 +96,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
  * queremos que se ejecute cuando se llame al servicio
  */
 
-app.post('/', mdAutenticacion.verificaToken, (req, res) => {
+app.post('/', (req, res) => {
     //Solo funciona si tenemos el pody parser configurado
     var body = req.body;
 

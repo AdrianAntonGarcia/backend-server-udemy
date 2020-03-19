@@ -41,84 +41,90 @@ async function verify(token) {
 app.post('/google', async(req, res) => {
     var token = req.body.token;
     var googleUser = await verify(token).catch((e) => {
-        if (e) {
-            return res.status(400).json({
-                ok: false,
-                mensaje: 'Token no válido'
-            });
-        }
-    });
+        // return res.status(400).json({
+        //     ok: false,
+        //     mensaje: 'Token no válido',
+        //     error: e
+        // });
 
-    Usuario.findOne({ email: googleUser.email }, (err, usuarioDB) => {
-        if (err) {
-            return res.status(500).json({
-                ok: false,
-                mensaje: 'Error al buscar usuarios login google',
-                errors: err
-            });
-        }
-        // Entonces ya existe
-        if (usuarioDB) {
-            /**
-             * Si el correo ya estaba registrado y no fue por la autenticación por google
-             * hay que sacarlo
-             */
-            if (usuarioDB.google === false) {
+    });
+    if (googleUser === undefined) {
+        return res.status(403).json({
+            ok: false,
+            mensaje: 'Token no válido'
+        });
+    } else {
+        Usuario.findOne({ email: googleUser.email }, (err, usuarioDB) => {
+            if (err) {
                 return res.status(500).json({
                     ok: false,
-                    mensaje: 'Debe usar su autenticación normal'
-                });
-            } else {
-                /**
-                 * Si el usuario existe hacemos login
-                 */
-                var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 }); // 4 horas
-
-                /**
-                 * Devolvemos el token que luego el usuario nos tiene que mandar para poder hacer las operaciones
-                 */
-
-                res.status(200).json({
-                    ok: true,
-                    usuario: usuarioDB,
-                    token: token,
-                    id: usuarioDB._id
+                    mensaje: 'Error al buscar usuarios login google',
+                    errors: err
                 });
             }
-        } else {
-            /**
-             * El usuario no existe, hay que crearlo
-             */
-            var usuario = new Usuario();
-            usuario.nombre = googleUser.nombre;
-            usuario.email = googleUser.email;
-            usuario.img = googleUser.img;
-            usuario.google = true;
-            usuario.password = ':P';
-
-            usuario.save((err, usuarioDB) => {
-                if (err) {
+            // Entonces ya existe
+            if (usuarioDB) {
+                /**
+                 * Si el correo ya estaba registrado y no fue por la autenticación por google
+                 * hay que sacarlo
+                 */
+                if (usuarioDB.google === false) {
                     return res.status(500).json({
                         ok: false,
-                        mensaje: 'Error al guardar usuario base de datos login google',
-                        errors: err
+                        mensaje: 'Debe usar su autenticación normal'
+                    });
+                } else {
+                    /**
+                     * Si el usuario existe hacemos login
+                     */
+                    var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 }); // 4 horas
+
+                    /**
+                     * Devolvemos el token que luego el usuario nos tiene que mandar para poder hacer las operaciones
+                     */
+
+                    res.status(200).json({
+                        ok: true,
+                        usuario: usuarioDB,
+                        token: token,
+                        id: usuarioDB._id
                     });
                 }
-                var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 }); // 4 horas
-
+            } else {
                 /**
-                 * Devolvemos el token que luego el usuario nos tiene que mandar para poder hacer las operaciones
+                 * El usuario no existe, hay que crearlo
                  */
+                var usuario = new Usuario();
+                usuario.nombre = googleUser.nombre;
+                usuario.email = googleUser.email;
+                usuario.img = googleUser.img;
+                usuario.google = true;
+                usuario.password = ':P';
 
-                res.status(200).json({
-                    ok: true,
-                    usuario: usuarioDB,
-                    token: token,
-                    id: usuarioDB._id
+                usuario.save((err, usuarioDB) => {
+                    if (err) {
+                        return res.status(500).json({
+                            ok: false,
+                            mensaje: 'Error al guardar usuario base de datos login google',
+                            errors: err
+                        });
+                    }
+                    var token = jwt.sign({ usuario: usuarioDB }, SEED, { expiresIn: 14400 }); // 4 horas
+
+                    /**
+                     * Devolvemos el token que luego el usuario nos tiene que mandar para poder hacer las operaciones
+                     */
+
+                    res.status(200).json({
+                        ok: true,
+                        usuario: usuarioDB,
+                        token: token,
+                        id: usuarioDB._id
+                    });
                 });
-            });
-        }
-    });
+            }
+        });
+    }
 });
 
 
