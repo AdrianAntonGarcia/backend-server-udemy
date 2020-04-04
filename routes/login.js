@@ -12,6 +12,24 @@ const client = new OAuth2Client(CLIENT_ID);
 var app = express();
 var Usuario = require('../models/usuario');
 
+var mdAutenticacion = require('../middlewares/autenticacion');
+
+/**
+ * Servicio que renueva el token del usuario
+ */
+
+app.get('/renuevatoken', mdAutenticacion.verificaToken, (req, res) => {
+	// Lo prolongamos por 4 horas
+	var token = jwt.sign({ usuario: req.usuario }, SEED, { expiresIn: 14400 }); // 4 horas
+	// Aquí el token es válido
+	res.status(200).json({
+		ok: true,
+		usuario: req.usuario,
+		token
+	});
+
+});
+
 /**
  * Login google
  */
